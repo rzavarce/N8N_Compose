@@ -592,10 +592,14 @@ services:
     <<: [*common, *proxy]
     image: ${TRAEFIK_IMAGE}
     container_name: ai_traefik
+    group_add:
+        - "986"
     profiles: [prod]
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.network=proxy_network"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
@@ -610,7 +614,7 @@ services:
       - "${TRAEFIK_HTTP_PORT}:80"
       - "${TRAEFIK_HTTPS_PORT}:443"
     environment:
-      DOCKER_API_VERSION: "1.41"
+      DOCKER_API_VERSION: "1.54"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - ./volumes/letsencrypt:/letsencrypt

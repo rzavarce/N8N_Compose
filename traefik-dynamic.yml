@@ -1,0 +1,114 @@
+# Rutas estáticas de Traefik — file provider
+# Actualiza los dominios aquí si cambian (no usan variables de .env)
+# Traefik los recarga automáticamente gracias a watch=true
+
+http:
+  routers:
+    n8n:
+      rule: "Host(`auto.flowsdone.com`)"
+      entrypoints: [websecure]
+      tls:
+        certresolver: myresolver
+      service: n8n-svc
+
+    langfuse:
+      rule: "Host(`langfuse.flowsdone.com`)"
+      entrypoints: [websecure]
+      tls:
+        certresolver: myresolver
+      service: langfuse-svc
+
+    evolution:
+      rule: "Host(`evo.flowsdone.com`)"
+      entrypoints: [websecure]
+      tls:
+        certresolver: myresolver
+      service: evolution-svc
+
+    webchat:
+      rule: "Host(`chat.flowsdone.com`)"
+      entrypoints: [websecure]
+      tls:
+        certresolver: myresolver
+      service: webchat-svc
+
+    minio:
+      rule: "Host(`buckets.flowsdone.com`)"
+      entrypoints: [websecure]
+      tls:
+        certresolver: myresolver
+      service: minio-svc
+
+    redisinsight:
+      rule: "Host(`cache.flowsdone.com`)"
+      entrypoints: [websecure]
+      tls:
+        certresolver: myresolver
+      service: redisinsight-svc
+
+    rabbitui:
+      rule: "Host(`broker.flowsdone.com`)"
+      entrypoints: [websecure]
+      tls:
+        certresolver: myresolver
+      service: rabbitui-svc
+
+    weaviate:
+      rule: "Host(`vector.flowsdone.com`)"
+      entrypoints: [websecure]
+      tls:
+        certresolver: myresolver
+      service: weaviate-svc
+
+    logs:
+      rule: "Host(`logs.flowsdone.com`)"
+      entrypoints: [websecure]
+      tls:
+        certresolver: myresolver
+      service: logs-svc
+
+  services:
+    n8n-svc:
+      loadBalancer:
+        servers:
+          - url: "http://n8n:5678"
+
+    langfuse-svc:
+      loadBalancer:
+        servers:
+          - url: "http://langfuse-server:3000"
+
+    evolution-svc:
+      loadBalancer:
+        servers:
+          - url: "http://evolution:8080"
+
+    webchat-svc:
+      loadBalancer:
+        servers:
+          - url: "http://webchat-gateway:8090"
+
+    minio-svc:
+      loadBalancer:
+        servers:
+          - url: "http://minio:9001"
+
+    redisinsight-svc:
+      loadBalancer:
+        servers:
+          - url: "http://redis-insight:5540"
+
+    rabbitui-svc:
+      loadBalancer:
+        servers:
+          - url: "http://rabbitmq-scout:3000"
+
+    weaviate-svc:
+      loadBalancer:
+        servers:
+          - url: "http://weaviate-gui:8501"
+
+    logs-svc:
+      loadBalancer:
+        servers:
+          - url: "http://opensearch-dashboards:5601"

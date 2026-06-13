@@ -1,0 +1,41 @@
+extensions:
+  basicauth/opensearch:
+    client_auth:
+      username: admin
+      password: ${OPENSEARCH_PASSWORD}
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+
+exporters:
+  opensearch:
+    http:
+      endpoint: https://opensearch:9200
+      tls:
+        # insecure: true
+        insecure_skip_verify: true
+      auth:
+        authenticator: basicauth/opensearch
+    timeout: 10s
+
+service:
+  extensions: [basicauth/opensearch]
+
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [opensearch]
+
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [opensearch]

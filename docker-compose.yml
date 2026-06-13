@@ -1,0 +1,630 @@
+name: ai-ecosystem
+
+# ==============================================================================
+# Production-ready single docker-compose (Strict Env Mode)
+# Todas las variables vienen del .env — sin defaults en el compose.
+# Si una variable falta en el .env, docker compose falla explícitamente.
+# ==============================================================================
+
+x-common: &common
+  restart: unless-stopped
+  init: true
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "5"
+
+x-backend: &backend
+  networks:
+    - backend_network
+
+x-proxy: &proxy
+  networks:
+    - proxy_network
+
+# Variables de entorno compartidas entre langfuse-server y langfuse-worker
+x-langfuse-env: &langfuse-env
+  NODE_ENV: production
+  DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${LANGFUSE_DB}"
+  CLICKHOUSE_URL: "http://${CLICKHOUSE_HOST}:${CLICKHOUSE_HTTP_PORT}"
+  CLICKHOUSE_MIGRATION_URL: "clickhouse://${CLICKHOUSE_USER}:${CLICKHOUSE_PASSWORD}@${CLICKHOUSE_HOST}:${CLICKHOUSE_TCP_PORT}/${LANGFUSE_CLICKHOUSE_DB}"
+  CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+  CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+  CLICKHOUSE_DB: ${LANGFUSE_CLICKHOUSE_DB}
+  CLICKHOUSE_CLUSTER_ENABLED: "false"
+  REDIS_CONNECTION_STRING: "redis://redis:6379"
+  LANGFUSE_S3_EVENT_UPLOAD_BUCKET: ${MINIO_BUCKET}
+  LANGFUSE_S3_EVENT_UPLOAD_REGION: ${MINIO_REGION}
+  LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+  LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+  LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: "http://minio:9000"
+  LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+  NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+  NEXTAUTH_URL: ${LANGFUSE_PUBLIC_URL}
+  SALT: ${SALT}
+  ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY}
+  TELEMETRY_ENABLED: "false"
+
+services:
+
+  # ── Infraestructura base ────────────────────────────────────────────────────
+
+  postgres:
+    <<: [*common, *backend]
+    image: ${POSTGRES_IMAGE}
+    container_name: ai_postgres
+    profiles: [dev, prod]
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_MULTIPLE_DATABASES: ${POSTGRES_MULTIPLE_DATABASES}
+    volumes:
+      - ./volumes/postgres_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+    healthcheck:
+      # pg_isready no autentica; verifica conectividad con el superusuario del .env
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    mem_limit: ${POSTGRES_MEM_LIMIT}
+    cpus: ${POSTGRES_CPUS}
+
+  redis:
+    <<: [*common, *backend]
+    image: ${REDIS_IMAGE}
+    container_name: ai_cache
+    profiles: [dev, prod]
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    ports:
+      - "127.0.0.1:${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    mem_limit: ${REDIS_MEM_LIMIT}
+    cpus: ${REDIS_CPUS}
+
+  rabbitmq:
+    <<: [*common, *backend]
+    image: ${RABBITMQ_IMAGE}
+    container_name: ai_broker
+    profiles: [dev, prod]
+    ports:
+      - "127.0.0.1:${RABBIT_PORT}:5672"
+      - "127.0.0.1:${RABBIT_MGMT_PORT}:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBIT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASS}
+      RABBITMQ_DEFAULT_VHOST: /
+    volumes:
+      - ./volumes/rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 15s
+      retries: 20
+      start_period: 30s
+    mem_limit: ${RABBITMQ_MEM_LIMIT}
+    cpus: ${RABBITMQ_CPUS}
+
+  minio:
+    <<: *common
+    image: ${MINIO_IMAGE}
+    container_name: ai_blob_storage
+    profiles: [dev, prod]
+    # Puerto 9000 (API S3) solo interno; consola expuesta en 9001
+    command: server /data --console-address ":9001"
+    ports:
+      - "${MINIO_CONSOLE_PORT}:9001"
+    networks:
+      - backend_network
+      - proxy_network
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - ./volumes/minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    mem_limit: ${MINIO_MEM_LIMIT}
+    cpus: ${MINIO_CPUS}
+    labels:
+      - "traefik.enable=${TRAEFIK_ENABLE}"
+      - "traefik.http.routers.minio.rule=Host(`${DOMAIN_MINIO}`)"
+      - "traefik.http.routers.minio.entrypoints=websecure"
+      - "traefik.http.routers.minio.tls.certresolver=myresolver"
+      - "traefik.http.services.minio.loadbalancer.server.port=9001"
+
+  weaviate:
+    <<: [*common, *backend]
+    image: ${WEAVIATE_IMAGE}
+    container_name: ai_vector_db
+    profiles: [dev, prod]
+    ports:
+      - "${WEAVIATE_PORT}:8080"
+      - "${WEAVIATE_GRPC_PORT}:50051"
+    environment:
+      RAFT_BOOTSTRAP_EXPECT: ${WEAVIATE_RAFT_BOOTSTRAP_EXPECT}
+      CLUSTER_HOSTNAME: ${WEAVIATE_CLUSTER_HOSTNAME}
+      LOG_LEVEL: ${WEAVIATE_LOG_LEVEL}
+      QUERY_DEFAULTS_LIMIT: ${WEAVIATE_QUERY_LIMIT}
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: ${WEAVIATE_ANON_ACCESS}
+      AUTHENTICATION_APIKEY_ENABLED: ${WEAVIATE_AUTHENTICATION_APIKEY_ENABLED}
+      AUTHENTICATION_APIKEY_ALLOWED_KEYS: ${WEAVIATE_AUTHENTICATION_APIKEY_ALLOWED_KEY}
+      AUTHENTICATION_APIKEY_USERS: ${WEAVIATE_AUTHENTICATION_APIKEY_USERS}
+      PERSISTENCE_DATA_PATH: ${WEAVIATE_PERSISTENCE_DATA_PATH}
+      DEFAULT_VECTORIZER_MODULE: ${WEAVIATE_VECTORIZER}
+      ENABLE_MODULES: ${WEAVIATE_MODULES}
+    volumes:
+      - ./volumes/weaviate_data:/var/lib/weaviate
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/v1/.well-known/ready"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+    mem_limit: ${WEAVIATE_MEM_LIMIT}
+    cpus: ${WEAVIATE_CPUS}
+
+  clickhouse:
+    <<: [*common, *backend]
+    image: ${CLICKHOUSE_IMAGE}
+    container_name: ai_observability_db
+    profiles: [dev, prod]
+    ports:
+      - "${CLICKHOUSE_HTTP_PORT}:8123"
+      - "${CLICKHOUSE_TCP_PORT}:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - clickhouse_logs:/var/log/clickhouse-server
+      # Fuerza IPv4 — Docker Desktop no expone IPv6 en la red bridge
+      - ./clickhouse-listen.xml:/etc/clickhouse-server/config.d/listen.xml:ro
+    environment:
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --query='SELECT 1'"]
+      interval: 10s
+      timeout: 10s
+      retries: 40
+      start_period: 60s
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    mem_limit: ${CLICKHOUSE_MEM_LIMIT}
+    cpus: ${CLICKHOUSE_CPUS}
+
+  opensearch:
+    <<: [*common, *backend]
+    image: ${OPENSEARCH_IMAGE}
+    container_name: ai_logs_db
+    profiles: [dev, prod]
+    environment:
+      cluster.name: ${OPENSEARCH_CLUSTER_NAME}
+      node.name: ${OPENSEARCH_NODE_NAME}
+      discovery.type: ${OPENSEARCH_DISCOVERY_TYPE}
+      bootstrap.memory_lock: ${OPENSEARCH_BOOTSTRAP_MEMORY_LOCK}
+      OPENSEARCH_JAVA_OPTS: ${OPENSEARCH_JAVA_OPTS}
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_PASSWORD}
+      OPENSEARCH_USERNAME: ${OPENSEARCH_USERNAME}
+      OPENSEARCH_PASSWORD: ${OPENSEARCH_PASSWORD}
+      plugins.security.disabled: "false"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - ./volumes/opensearch_data:/usr/share/opensearch/data
+    ports:
+      - "${OPENSEARCH_PORT}:9200"
+    healthcheck:
+      # test: curl -k -s -u "$${OPENSEARCH_USERNAME}:$${OPENSEARCH_PASSWORD}" -XGET https://127.0.0.1:9200/_cluster/health | grep -E '"status":"(green|yellow)"'
+      test: ["CMD-SHELL", "curl -k -sf -u ${OPENSEARCH_USERNAME}:${OPENSEARCH_PASSWORD} ${OPENSEARCH_HEALTH_URL} | grep -qE '\"status\":\"(green|yellow)\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    mem_limit: ${OPENSEARCH_MEM_LIMIT}
+    cpus: ${OPENSEARCH_CPUS}
+
+  # ── Plataformas de aplicación ───────────────────────────────────────────────
+
+  langfuse-server:
+    <<: *common
+    image: ${LANGFUSE_IMAGE}
+    container_name: ai_observability
+    profiles: [dev, prod]
+    ports:
+      - "${LANGFUSE_PORT}:3000"
+    networks:
+      - backend_network
+      - proxy_network
+    environment:
+      <<: *langfuse-env
+      # Next.js escucha en la IP de red del contenedor; HOSTNAME fuerza todas las interfaces
+      HOSTNAME: "0.0.0.0"
+      NODE_OPTIONS: "--max-old-space-size=2048"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      disable: true
+    mem_limit: ${LANGFUSE_MEM_LIMIT}
+    cpus: ${LANGFUSE_CPUS}
+    labels:
+      - "traefik.enable=${TRAEFIK_ENABLE}"
+      - "traefik.http.routers.langfuse.rule=Host(`${DOMAIN_LANGFUSE}`)"
+      - "traefik.http.routers.langfuse.entrypoints=websecure"
+      - "traefik.http.routers.langfuse.tls.certresolver=myresolver"
+      - "traefik.http.services.langfuse.loadbalancer.server.port=3000"
+
+  langfuse-worker:
+    <<: [*common, *backend]
+    image: ${LANGFUSE_WORKER_IMAGE}
+    container_name: ai_observability_worker
+    profiles: [dev, prod]
+    environment:
+      <<: *langfuse-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      langfuse-server:
+        condition: service_started
+    healthcheck:
+      disable: true
+    mem_limit: ${LANGFUSE_WORKER_MEM_LIMIT}
+    cpus: ${LANGFUSE_WORKER_CPUS}
+
+  n8n:
+    <<: *common
+    image: ${N8N_IMAGE}
+    container_name: ai_orchestrator
+    profiles: [dev, prod]
+    ports:
+      - "${N8N_PORT}:5678"
+      - "${N8N_PORT_ALT}:5679"
+    networks:
+      - backend_network
+      - proxy_network
+    volumes:
+      - n8n_data:/home/node/.n8n
+    environment:
+      TINI_SUBREAPER: "1"
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: ${POSTGRES_HOST}
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${N8N_DB}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_POSTGRESDB_STATEMENT_TIMEOUT: "0"
+      N8N_PROTOCOL: ${N8N_PROTOCOL}
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      N8N_ENABLE_EXECUTE_COMMAND: ${N8N_ENABLE_EXECUTE_COMMAND}
+      N8N_EDITOR_BASE_URL: ${N8N_EDITOR_BASE_URL}
+      EXECUTIONS_DATA_PRUNE: ${N8N_EXECUTIONS_DATA_PRUNE}
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL}
+      N8N_LOG_LEVEL: ${N8N_LOG_LEVEL}
+      LANGFUSE_HOST: ${LANGFUSE_HOST}
+      LANGFUSE_BASEURL: ${LANGFUSE_BASEURL}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
+      N8N_OTEL_TRACING_ENABLED: ${N8N_OTEL_TRACING_ENABLED}
+      N8N_OTEL_TRACING_ENDPOINT: ${N8N_OTEL_TRACING_ENDPOINT}
+      N8N_OTEL_TRACING_PROTOCOL: ${N8N_OTEL_TRACING_PROTOCOL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      disable: true
+    mem_limit: ${N8N_MEM_LIMIT}
+    cpus: ${N8N_CPUS}
+    labels:
+      - "traefik.enable=${TRAEFIK_ENABLE}"
+      - "traefik.http.routers.n8n.rule=Host(`${DOMAIN_N8N}`)"
+      - "traefik.http.routers.n8n.entrypoints=websecure"
+      - "traefik.http.routers.n8n.tls.certresolver=myresolver"
+      - "traefik.http.services.n8n.loadbalancer.server.port=5678"
+
+  evolution:
+    <<: *common
+    image: ${EVOLUTION_IMAGE}
+    container_name: ai_evolution
+    profiles: [dev, prod]
+    ports:
+      - "${EVOLUTION_PORT}:8080"
+    networks:
+      - backend_network
+      - proxy_network
+    environment:
+      SERVER_URL: ${EVOLUTION_PUBLIC_URL}
+      N8N_ENABLED: ${EVOLUTION_N8N_ENABLED}
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY}
+      DATABASE_ENABLED: ${EVOLUTION_DB_ENABLED}
+      DATABASE_PROVIDER: ${EVOLUTION_DB_PROVIDER}
+      DATABASE_CONNECTION_URI: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${EVOLUTION_DB}?schema=public"
+      DATABASE_CONNECTION_CLIENT_NAME: evolution_api
+      PRISMA_MIGRATE_DISABLE_ADVISORY_LOCK: ${PRISMA_MIGRATE_DISABLE_ADVISORY_LOCK}
+      CACHE_REDIS_ENABLED: ${EVOLUTION_REDIS_ENABLED}
+      CACHE_REDIS_URI: ${EVOLUTION_REDIS_URI}
+      RABBITMQ_ENABLED: ${EVOLUTION_RABBIT_ENABLED}
+      RABBITMQ_URI: "amqp://${RABBIT_USER}:${RABBIT_PASS}@rabbitmq:5672"
+      OTEL_ENABLED: ${OTEL_ENABLED}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+      OTEL_SERVICE_NAME: evolution-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      disable: true
+    mem_limit: ${EVOLUTION_MEM_LIMIT}
+    cpus: ${EVOLUTION_CPUS}
+    labels:
+      - "traefik.enable=${TRAEFIK_ENABLE}"
+      - "traefik.http.routers.evolution.rule=Host(`${DOMAIN_EVOLUTION}`)"
+      - "traefik.http.routers.evolution.entrypoints=websecure"
+      - "traefik.http.routers.evolution.tls.certresolver=myresolver"
+      - "traefik.http.services.evolution.loadbalancer.server.port=8080"
+
+  webchat-gateway:
+    <<: *common
+    build:
+      context: ./webchat_gateway
+      dockerfile: Dockerfile
+    container_name: ai_webchat_gateway
+    profiles: [dev, prod]
+    ports:
+      - "${WEBCHAT_APP_PORT}:8090"
+    networks:
+      - backend_network
+      - proxy_network
+    volumes:
+      - ./webchat_gateway/app:/app/app
+      - ./webchat_gateway/pyproject.toml:/app/pyproject.toml:ro
+      - ./webchat_gateway/uv.lock:/app/uv.lock:ro
+    environment:
+      APP_HOST: ${WEBCHAT_APP_HOST}
+      APP_PORT: ${WEBCHAT_APP_PORT}
+      PUBLIC_BASE_URL: ${WEBCHAT_PUBLIC_BASE_URL}
+      N8N_WEBHOOK_URL: ${WEBCHAT_N8N_WEBHOOK_URL}
+      N8N_WEBHOOK_BASE_URL: ${WEBCHAT_N8N_WEBHOOK_BASE_URL}
+      N8N_WEBHOOK_TIMEOUT_SECONDS: ${WEBCHAT_N8N_WEBHOOK_TIMEOUT_SECONDS}
+      ALLOWED_N8N_WEBHOOK_URL_PREFIXES: ${WEBCHAT_ALLOWED_N8N_WEBHOOK_URL_PREFIXES}
+      REDIS_URL: ${WEBCHAT_REDIS_URL}
+      REDIS_RESPONSE_TTL_SECONDS: ${WEBCHAT_RESPONSE_TTL_SECONDS}
+      ALLOWED_ORIGINS: ${WEBCHAT_ALLOWED_ORIGINS}
+      LOG_LEVEL: ${WEBCHAT_LOG_LEVEL}
+      INSTAGRAM_CLIENT_ID: ${INSTAGRAM_CLIENT_ID}
+      INSTAGRAM_CLIENT_SECRET: ${INSTAGRAM_CLIENT_SECRET}
+      INSTAGRAM_REDIRECT_URI: ${INSTAGRAM_REDIRECT_URI}
+      INSTAGRAM_AUTH_URL: ${INSTAGRAM_AUTH_URL}
+      INSTAGRAM_TOKEN_URL: ${INSTAGRAM_TOKEN_URL}
+      INSTAGRAM_SCOPES: ${INSTAGRAM_SCOPES}
+      INSTAGRAM_OAUTH_STATE_TTL_SECONDS: ${INSTAGRAM_OAUTH_STATE_TTL_SECONDS}
+      INSTAGRAM_FRONTEND_SUCCESS_URL: ${INSTAGRAM_FRONTEND_SUCCESS_URL}
+      INSTAGRAM_FRONTEND_ERROR_URL: ${INSTAGRAM_FRONTEND_ERROR_URL}
+    depends_on:
+      redis:
+        condition: service_healthy
+      n8n:
+        condition: service_started
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8090"]
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8090/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    mem_limit: ${WEBCHAT_MEM_LIMIT}
+    cpus: ${WEBCHAT_CPUS}
+    labels:
+      - "traefik.enable=${TRAEFIK_ENABLE}"
+      - "traefik.http.routers.webchat.rule=Host(`${DOMAIN_WEBCHAT}`)"
+      - "traefik.http.routers.webchat.entrypoints=websecure"
+      - "traefik.http.routers.webchat.tls.certresolver=myresolver"
+      - "traefik.http.services.webchat.loadbalancer.server.port=8090"
+
+  otel-collector:
+    <<: [*common, *backend]
+    image: ${OTEL_COLLECTOR_IMAGE}
+    container_name: ai_collector
+    profiles: [dev, prod]
+    environment:
+      OPENSEARCH_PASSWORD: ${OPENSEARCH_PASSWORD}
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    ports:
+      - "${OTEL_PORT_GRPC}:4317"
+      - "${OTEL_PORT_HTTP}:4318"
+    mem_limit: ${OTEL_MEM_LIMIT}
+    cpus: ${OTEL_CPUS}
+
+  # ── Paneles web / UIs ───────────────────────────────────────────────────────
+
+  redis-insight:
+    <<: *common
+    image: ${REDISINSIGHT_IMAGE}
+    container_name: ai_redis_ui
+    profiles: [dev, prod]
+    networks:
+      - backend_network
+      - proxy_network
+    ports:
+      - "${REDISINSIGHT_PORT}:5540"
+    environment:
+      RI_APP_HOST: ${REDISINSIGHT_APP_HOST}
+      RI_APP_PORT: 5540
+    volumes:
+      - redisinsight_data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    mem_limit: ${REDISINSIGHT_MEM_LIMIT}
+    cpus: ${REDISINSIGHT_CPUS}
+    labels:
+      - "traefik.enable=${TRAEFIK_ENABLE}"
+      - "traefik.http.routers.redisinsight.rule=Host(`${DOMAIN_REDIS_UI}`)"
+      - "traefik.http.routers.redisinsight.entrypoints=websecure"
+      - "traefik.http.routers.redisinsight.tls.certresolver=myresolver"
+      - "traefik.http.services.redisinsight.loadbalancer.server.port=5540"
+
+  rabbitmq-scout:
+    <<: *common
+    image: ${RABBITSCOUT_IMAGE}
+    container_name: ai_broker_ui
+    profiles: [dev, prod]
+    networks:
+      - backend_network
+      - proxy_network
+    ports:
+      - "${RABBIT_SCOUT_PORT}:3000"
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: ${RABBIT_MGMT_PORT}
+      RABBITMQ_PROTOCOL: ${RABBITMQ_PROTOCOL}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    mem_limit: ${RABBITSCOUT_MEM_LIMIT}
+    cpus: ${RABBITSCOUT_CPUS}
+    labels:
+      - "traefik.enable=${TRAEFIK_ENABLE}"
+      - "traefik.http.routers.rabbitui.rule=Host(`${DOMAIN_RABBIT_UI}`)"
+      - "traefik.http.routers.rabbitui.entrypoints=websecure"
+      - "traefik.http.routers.rabbitui.tls.certresolver=myresolver"
+      - "traefik.http.services.rabbitui.loadbalancer.server.port=3000"
+
+  weaviate-gui:
+    <<: *common
+    build:
+      context: ${WEAVIATE_GUI_BUILD_CONTEXT}
+    container_name: ai_vector_ui
+    profiles: [dev, prod]
+    networks:
+      - backend_network
+      - proxy_network
+    ports:
+      - "${WEAVIATE_GUI_PORT}:8501"
+    environment:
+      WEAVIATE_URL: ${WEAVIATE_URL}
+      WEAVIATE_API_KEY: ${WEAVIATE_AUTHENTICATION_APIKEY_ALLOWED_KEY}
+    depends_on:
+      weaviate:
+        condition: service_healthy
+    mem_limit: ${WEAVIATE_GUI_MEM_LIMIT}
+    cpus: ${WEAVIATE_GUI_CPUS}
+    labels:
+      - "traefik.enable=${TRAEFIK_ENABLE}"
+      - "traefik.http.routers.weaviate.rule=Host(`${DOMAIN_WEAVIATE}`)"
+      - "traefik.http.routers.weaviate.entrypoints=websecure"
+      - "traefik.http.routers.weaviate.tls.certresolver=myresolver"
+      - "traefik.http.services.weaviate.loadbalancer.server.port=8501"
+
+  opensearch-dashboards:
+    <<: *common
+    image: ${OPENSEARCH_DASHBOARDS_IMAGE}
+    container_name: ai_logs_ui
+    profiles: [dev, prod]
+    networks:
+      - backend_network
+      - proxy_network
+    environment:
+      OPENSEARCH_HOSTS: ${OPENSEARCH_DASHBOARDS_HOSTS}
+      OPENSEARCH_USERNAME: "${OPENSEARCH_USERNAME}"
+      OPENSEARCH_PASSWORD: "${OPENSEARCH_PASSWORD}"
+      OPENSEARCH_SSL_VERIFICATIONMODE: none
+      DISABLE_SECURITY_PLUGIN: false
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    ports:
+      - "${OPENSEARCH_DASH_PORT}:5601"
+    mem_limit: ${OPENSEARCH_DASH_MEM_LIMIT}
+    cpus: ${OPENSEARCH_DASH_CPUS}
+    labels:
+      - "traefik.enable=${TRAEFIK_ENABLE}"
+      - "traefik.http.routers.logs.rule=Host(`${DOMAIN_LOGS}`)"
+      - "traefik.http.routers.logs.entrypoints=websecure"
+      - "traefik.http.routers.logs.tls.certresolver=myresolver"
+      - "traefik.http.services.logs.loadbalancer.server.port=5601"
+
+  # ── Proxy inverso (solo prod) ───────────────────────────────────────────────
+
+  traefik:
+    <<: [*common, *proxy]
+    image: ${TRAEFIK_IMAGE}
+    container_name: ai_traefik
+    profiles: [prod]
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--certificatesresolvers.myresolver.acme.email=${SSL_EMAIL}"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+      - "--accesslog=true"
+      - "--log.level=${TRAEFIK_LOG_LEVEL}"
+    ports:
+      - "${TRAEFIK_HTTP_PORT}:80"
+      - "${TRAEFIK_HTTPS_PORT}:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - ./volumes/letsencrypt:/letsencrypt
+    mem_limit: ${TRAEFIK_MEM_LIMIT}
+    cpus: ${TRAEFIK_CPUS}
+
+networks:
+  backend_network:
+    driver: bridge
+  proxy_network:
+    driver: bridge
+
+# Solo se declaran los volúmenes Docker nombrados reales.
+# Los bind mounts (./volumes/postgres_data, rabbitmq_data, etc.) no se declaran aquí.
+volumes:
+  n8n_data:
+  redis_data:
+  redisinsight_data:
+  clickhouse_data:
+  clickhouse_logs:
+  letsencrypt:

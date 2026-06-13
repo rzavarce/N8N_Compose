@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZavarceCloud AI Webchat</title>
+  <link rel="stylesheet" href="/static/agent-chat-widget.css" />
+  <script defer src="/static/agent-chat-widget.js"></script>
+</head>
+<body>
+  <main class="demo-page">
+    <section class="demo-card">
+      <h1>ZavarceCloud AI Webchat</h1>
+      <p>El WebSocket se crea al hacer click en el launcher.</p>
+      <p>Los mensajes del usuario viajan por WebSocket al gateway.</p>
+      <p>El gateway reenvía por HTTPX al webhook dinámico de n8n.</p>
+    </section>
+  </main>
+
+  <script>
+    window.AgentChatConfig = {
+      wsUrl: (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws',
+      n8nWebhookPath: '/webhook-test/8ddf2e2c-e855-4b8d-a99e-c7d200c6ec57',
+      title: 'ZavarceCloud AI',
+      initialMessage: 'Hi! How can I help you today?',
+      inputPlaceholder: 'Type your message...',
+      waitingMessage: 'Processing your request',
+      launcherColor: '#4F46E5',
+      launcherIconColor: '#ffffff',
+      launcherIconAccentColor: '#111827',
+      sendButtonColor: '#10B981',
+      width: '420px',
+      height: '680px',
+      autoOpen: false
+    };
+  </script>
+</body>
+</html>

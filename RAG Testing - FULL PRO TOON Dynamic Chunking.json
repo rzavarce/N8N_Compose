@@ -1,0 +1,2494 @@
+{
+  "name": "RAG Testing - FULL PRO TOON Dynamic Chunking",
+  "nodes": [
+    {
+      "parameters": {
+        "dataType": "binary",
+        "binaryMode": "specificField",
+        "options": {}
+      },
+      "id": "1e629fce-7a0d-4777-81c4-b0c429b20156",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "position": [
+        4416,
+        -1696
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "chunkSize": "={{ $json?.toonChunkSize ?? 450 }}",
+        "chunkOverlap": "={{ $json?.toonChunkOverlap ?? 40 }}",
+        "options": {}
+      },
+      "id": "8ee8b618-4d51-4fac-9e6a-3869b1e82c9b",
+      "name": "Recursive Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "position": [
+        4464,
+        -1488
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "name": "company_documents_tool",
+        "description": "Retrieve information from company documents. FULL PRO: prefer concise retrieval; search product code/name/category/stock/price; use queryOptimized when present; return only facts needed."
+      },
+      "id": "01c0d9d5-846b-42bd-bdf6-9afa5ea03847",
+      "name": "Vector Store Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "position": [
+        4640,
+        -752
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "id": "046a578c-f808-46b3-8062-a13fe6355035",
+      "name": "Embeddings Google Gemini (retrieval)",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "position": [
+        4512,
+        -352
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "32BpyxDU7zNfxLi3",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "fileName": "={{ $json.name }}"
+        }
+      },
+      "id": "cdf566ed-8740-4765-b909-ff357d57bccb",
+      "name": "Download File From Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        3952,
+        -1760
+      ],
+      "typeVersion": 3,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "h0O3pUHjhGrFQWVC",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Ominichannel Webhooks \n\nRecibe peticiones desde diferentes canales y los enruta a una cola de RabbitMQ para procesarlo",
+        "height": 1280,
+        "width": 1216,
+        "color": 4
+      },
+      "id": "41dff16a-5416-4fa2-8419-9437f85e418e",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2336,
+        -1152
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## RAG PIPELINE EMBBEDINGS\n\nFULL PRO añadido:\n- TOON metadata policy\n- Dynamic chunking\n- Deduplicación lógica\n- Preparado para Weaviate hybrid/vector filtering",
+        "height": 800,
+        "width": 1680,
+        "color": 5
+      },
+      "id": "911c8b1b-3a98-48e3-940a-f98ac44db6fc",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3488,
+        -2048
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "ad9c2d7d-03eb-4a35-9df0-1bdf42b0d5ca",
+      "name": "Google Gemini Chat Model (retrieval)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "position": [
+        4832,
+        -544
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "32BpyxDU7zNfxLi3",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Set up steps\n\n1. Google Cloud Project and Vertex AI API:\n* Create a Google Cloud project.\n* Enable the Vertex AI API for your project.\n2. Google AI API Key:\n* Obtain a Google AI API key from Google AI Studio.\n3. Weaviate Account / Instance:\n* Configure collection Documents using schema included in this workflow sticky notes.\n4. Google Drive:\n* Create a dedicated folder in Google Drive where company documents are stored.\n5. Credentials in n8n:\n* Google Drive OAuth2\n* Google Gemini(PaLM) Api\n* Weaviate API\n* RabbitMQ\n* Channel credentials\n6. Import workflow and remap credentials if required.",
+        "height": 720,
+        "width": 420
+      },
+      "id": "3b622c52-790c-412d-ab65-ff00e95ab053",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2064,
+        -2080
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "weaviateCollection": {
+          "__rl": true,
+          "value": "Documents",
+          "mode": "list",
+          "cachedResultName": "Documents"
+        },
+        "options": {}
+      },
+      "id": "2420e53d-2856-4063-9abe-153f10f3697c",
+      "name": "Weaviate Vector Store1",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreWeaviate",
+      "position": [
+        4352,
+        -1888
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "weaviateApi": {
+          "id": "SD3QRGFgnciADYVP",
+          "name": "Weaviate Credentials account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "id": "001c5584-55b2-45f5-ace6-631776e2f081",
+      "name": "Embeddings Google Gemini",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "position": [
+        4288,
+        -1600
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "32BpyxDU7zNfxLi3",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "weaviateCollection": {
+          "__rl": true,
+          "value": "Documents",
+          "mode": "list",
+          "cachedResultName": "Documents"
+        },
+        "options": {}
+      },
+      "id": "c4e862b9-e899-4ce7-9cb5-a89af637dba2",
+      "name": "Weaviate Vector Store2",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreWeaviate",
+      "position": [
+        4544,
+        -544
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "weaviateApi": {
+          "id": "SD3QRGFgnciADYVP",
+          "name": "Weaviate Credentials account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "public": true,
+        "options": {
+          "responseMode": "responseNodes"
+        }
+      },
+      "id": "b5051010-9963-4687-98ba-a3b5343e7373",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "position": [
+        2496,
+        -1040
+      ],
+      "typeVersion": 1.4,
+      "webhookId": "3b319649-ace0-453e-a7a3-b3abe37a7c98"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "a46d93d2-1d8a-4caa-93ae-d4b7aadade92",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "position": [
+        2496,
+        -832
+      ],
+      "typeVersion": 1.1,
+      "webhookId": "bf19776b-2603-47bd-a596-98833f017aa5",
+      "credentials": {
+        "telegramApi": {
+          "id": "zjHwEc8NRIdAm0Nq",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "enrich-output",
+              "name": "output",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "enrich-channel",
+              "name": "channel",
+              "value": "={{ $('Parse Queue Envelope').item.json.channel }}",
+              "type": "string"
+            },
+            {
+              "id": "enrich-session",
+              "name": "sessionId",
+              "value": "={{ $('Parse Queue Envelope').item.json.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "enrich-userid",
+              "name": "userId",
+              "value": "={{ $('Parse Queue Envelope').item.json.userId }}",
+              "type": "string"
+            },
+            {
+              "id": "request",
+              "name": "requestId",
+              "value": "={{ $('Parse Queue Envelope').item.json.requestId }}",
+              "type": "string"
+            },
+            {
+              "id": "reply",
+              "name": "replyMode",
+              "value": "={{ $('Parse Queue Envelope').item.json.replyMode }}",
+              "type": "string"
+            },
+            {
+              "id": "callback",
+              "name": "callbackUrl",
+              "value": "={{ $('Parse Queue Envelope').item.json.callbackUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "socket",
+              "name": "socketSessionId",
+              "value": "={{ $('Parse Queue Envelope').item.json.socketSessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "metadata",
+              "name": "metadata",
+              "value": "={{ $('Parse Queue Envelope').item.json.metadata }}",
+              "type": "string"
+            },
+            {
+              "id": "trace",
+              "name": "trace",
+              "value": "={{ $json.trace ?? {} }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b5288bd3-2d63-4646-b823-5a4a4fe7899c",
+      "name": "Enrich Output",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        4752,
+        -992
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.channel }}",
+                    "rightValue": "n8n_chat",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "n8n_chat"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.channel }}",
+                    "rightValue": "telegram",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "telegram"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.channel }}",
+                    "rightValue": "webhook",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "webhook"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.channel }}",
+                    "rightValue": "facebook",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "facebook"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.channel }}",
+                    "rightValue": "whatsapp",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "whatsapp"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.channel }}",
+                    "rightValue": "instagram",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "instagram"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none"
+        }
+      },
+      "id": "c020f452-7ddb-4f7b-a6dd-d77b76c13098",
+      "name": "Route Response",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        5248,
+        -816
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "content": "## 📤 Output Routing\n`Enrich Output` fusiona el output del agente\ncon channel/sessionId/userId del Normalize.\n\n`Route Response` enruta según canal:\n- **webchat** → responde solo / gateway\n- **telegram** → Send Telegram Message\n- **webhook** → HTTP Request\n- **facebook** → Facebook Graph API\n- **whatsapp** → Evolution API",
+        "height": 384,
+        "width": 300
+      },
+      "id": "d2767596-27b3-48f2-be12-17dcdab4c166",
+      "name": "Sticky Routing",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1904,
+        -992
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://webchat-gateway:8090/api/responses",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ requestId: $json.requestId, sessionId: $json.sessionId, userId: $json.userId, channel: 'webchat', status: 'done', response: $json.output }) }}",
+        "options": {}
+      },
+      "id": "f8ed5311-cf89-4b09-a2fa-85118f355e8a",
+      "name": "HTTP Request1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        5568,
+        -704
+      ],
+      "typeVersion": 4.4
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.userId }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "f3f60959-3985-4d9d-9430-f51c3a11486c",
+      "name": "Send Telegram Message",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        5568,
+        -912
+      ],
+      "typeVersion": 1.2,
+      "webhookId": "a326de09-9e49-4da7-8e51-27ea3efa34a7",
+      "credentials": {
+        "telegramApi": {
+          "id": "zjHwEc8NRIdAm0Nq",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "id": "1c80bf3b-df37-4b78-8c48-9494cf3561d6",
+      "name": "Chat",
+      "type": "@n8n/n8n-nodes-langchain.chat",
+      "position": [
+        5568,
+        -1104
+      ],
+      "typeVersion": 1.3,
+      "webhookId": "9b852630-c2ba-4de5-bf5c-530c89fa9343"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.queryOptimized ?? $json.message }}",
+        "options": {
+          "systemMessage": "📋 Identidad y Tono\n\nNombre: Fibrabot.\n\nRol: Asistente Especializado en Hardware y Gestión de Stock.\n\nPersonalidad: Profesional, servicial y eficiente. Tiene un toque de \"geek\" amable que conoce la importancia de una buena latencia o un SSD rápido.\n\nTono de voz: Directo pero cercano. Utiliza términos técnicos cuando es necesario, pero siempre aclara el beneficio para el usuario.\n\n🛠️ Funciones Principales (Basadas en tu Excel)\n\nConsulta de Disponibilidad: * Si el cliente pregunta por un producto, Fibrabot verifica la columna Cantidad.\n\nRegla de Oro: Si el stock es 0, no se limita a decir \"no hay\". Debe ofrecer una alternativa similar que sí tenga stock o informar que se puede realizar un pedido bajo reserva.\n\nAsesoría de Precios: * Informa el precio exacto de la columna Precio y puede calcular subtotales si el cliente pide varias unidades.\n\nDescripción Técnica: * Utiliza la columna Descripción para explicar por qué ese producto es la elección correcta para el cliente.\n\nIdentificación por Código: * Puede rastrear cualquier artículo rápidamente usando el Código (ej. CP-1045).\n\n🧠 Directrices de Respuesta (Prompting)\n\n\"Eres Fibrabot, el asistente inteligente de nuestra tienda de computación. Tu fuente de verdad es el archivo de inventario proporcionado. Tu objetivo es ayudar al cliente a encontrar lo que busca y cerrar la venta.\"\n\nSi el stock es bajo (1 a 3 unidades): Debe usar frases de urgencia como: \"¡Solo nos quedan [X] unidades! Te recomiendo asegurar la tuya pronto\".\n\nSi el stock es 0: Debe responder: \"Actualmente el [Producto] está agotado, pero tengo el [Producto Similar] con excelentes prestaciones que te podría servir perfectamente. ¿Te gustaría que te dé los detalles?\".\n\nSobre los Precios: Siempre debe ser transparente y confirmar si el precio incluye impuestos (según decidas configurar tu política de tienda).\n\n💬 Ejemplo de Interacción\n\nCliente: \"Hola, ¿tienen algún monitor de 144Hz disponible y cuánto cuesta?\"\n\nFibrabot: > \"¡Hola! Soy Fibrabot, un gusto saludarte. Déjame revisar... ¡Sí! Tenemos el Monitor LED Samsung 144Hz (Código CP-1022). Es una excelente opción para gaming de alto rendimiento. Su precio es de $345.50 y actualmente nos quedan 12 unidades en stock. ¿Te gustaría que reserve uno para ti o prefieres ver otra marca?\"\n\nRecuerda nuestros metodos de pago son: Cash, Tarjeta o Pagomovil\n\n⚙️ OPTIMIZACIÓN FULL PRO AÑADIDA:\n- Usa la herramienta company_documents_tool solo cuando necesites información de inventario o documentos.\n- Prioriza respuestas compactas y basadas estrictamente en el contexto recuperado.\n- Si el mensaje viene con queryOptimized o retrievalHints, úsalos como guía de búsqueda.\n- No inventes precios, cantidades, códigos ni disponibilidad.\n- Si no hay evidencia suficiente en el RAG, dilo y ofrece una alternativa de búsqueda.",
+          "returnIntermediateSteps": true
+        }
+      },
+      "id": "6adfdc44-d7bf-44f1-81f1-a808d1cdd147",
+      "name": "AI Agent1",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        4400,
+        -992
+      ],
+      "typeVersion": 2.1
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemma-4-26b-a4b-it",
+        "options": {}
+      },
+      "id": "ef0ca79d-85b6-4203-8f52-49afd19a32a2",
+      "name": "Google Gemini Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "position": [
+        3760,
+        -416
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "32BpyxDU7zNfxLi3",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "gpt-3.5-turbo"
+        },
+        "options": {}
+      },
+      "id": "91bd193c-da78-45cb-a924-c4081029fdb4",
+      "name": "OpenAI Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        3920,
+        -416
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+          "id": "4ch0r8dtKhGjmx5o",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "9d2c3a08-b56d-42ba-8a11-be1e6e3cf158",
+      "name": "DeepSeek Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "position": [
+        4240,
+        -416
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "deepSeekApi": {
+          "id": "ZgQ1wNsBBzSOvRkb",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {}
+      },
+      "id": "7ec5ef69-8e0f-4463-9be5-ee9eeef31e51",
+      "name": "Anthropic Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "position": [
+        4096,
+        -416
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "anthropicApi": {
+          "id": "GZXYZG1X8Ly4i4TH",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "61761247-ff8f-49c6-a04c-a540a18514e6",
+      "name": "Postgres Chat Memory1",
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "position": [
+        4432,
+        -688
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "postgres": {
+          "id": "Oa8cI3pIJMzyBSEh",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "name",
+              "name": "name",
+              "type": "string",
+              "value": "Inventario_Tienda_Computacion.xlsx - Inventario (2).csv"
+            },
+            {
+              "id": "id",
+              "name": "id",
+              "value": "1Rm5NCgg5eO4pLOA2CWvGuD3qzjoWZSt9",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "60119f9d-1efb-4dc1-a5c1-56dc5daf969f",
+      "name": "Google Folder ID",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        3760,
+        -1792
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "ffc11c20-97a1-4d7c-b663-3bf102f3eb7b",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "position": [
+        4752,
+        -1760
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {},
+      "id": "e42556c5-ca55-4beb-83a1-7da7932efd09",
+      "name": "When clicking ‘Test workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        3568,
+        -1792
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "https://drive.google.com/drive/folders/1geav7MRGXB_3geEDW_NYQW259vDRQAEB",
+          "mode": "url"
+        },
+        "event": "fileCreated",
+        "options": {
+          "fileType": "all"
+        }
+      },
+      "id": "c1df4a97-5bc9-4749-992e-e67280856191",
+      "name": "Google Drive Trigger",
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "position": [
+        3744,
+        -1504
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "h0O3pUHjhGrFQWVC",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "queue": "zavarce_queue",
+        "options": {
+          "durable": true
+        }
+      },
+      "id": "72f034be-8524-456a-8400-25af6a88d092",
+      "name": "RabbitMQ1",
+      "type": "n8n-nodes-base.rabbitmq",
+      "position": [
+        3344,
+        -576
+      ],
+      "typeVersion": 1.1,
+      "credentials": {
+        "rabbitmq": {
+          "id": "HNJ77FrQZ0JQFgMI",
+          "name": "RabbitMQ account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "queue": "zavarce_queue",
+        "options": {}
+      },
+      "id": "6275d8c3-a241-4235-81ec-4a69bb676407",
+      "name": "RabbitMQ Trigger",
+      "type": "n8n-nodes-base.rabbitmqTrigger",
+      "position": [
+        3728,
+        -992
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "rabbitmq": {
+          "id": "HNJ77FrQZ0JQFgMI",
+          "name": "RabbitMQ account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nif ($input.first().json.query[\"hub.verify_token\"] === \"ZavarceCloud_2026\") {\n return [{ json: { challenge: $input.first().json.query[\"hub.challenge\"] } }];\n}\n"
+      },
+      "id": "50bba854-2894-4841-a396-1600dd4b84f2",
+      "name": "Code in JavaScript",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        2976,
+        304
+      ],
+      "typeVersion": 2,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.challenge }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain"
+              }
+            ]
+          }
+        }
+      },
+      "id": "29376b8a-aa4d-436d-845d-feb72d7a6fd8",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        3168,
+        304
+      ],
+      "typeVersion": 1.5,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "path": "dfadb2cf-6637-4bcb-a80e-a59fd592afff",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "10d74ba2-424a-4676-be2d-a17b08759714",
+      "name": "Facebook_Verify_API",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        2768,
+        304
+      ],
+      "typeVersion": 2.1,
+      "webhookId": "3c45c124-f751-42a9-bfc7-7e62753e2ad7",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "## Facebook Verify \n**SOLO PARA VERIFICAR EL WEBHOOK EN META** \n\nDebe ser una copia del trigger webhook que usamos en el flujo para recibir mensajes desde Meta pero con el metodo GET",
+        "height": 304,
+        "width": 672,
+        "color": 2
+      },
+      "id": "d5d3a3af-a04a-44ff-8b21-81f5fc678fa6",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2704,
+        160
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v23.0",
+        "node": "me",
+        "edge": "messages",
+        "options": {
+          "queryParametersJson": "={\n \"recipient\": { \"id\": \"{{$json.userId}}\" },\n \"message\": { \"text\": \"{{$json.output}}\" },\n \"messaging_type\": \"RESPONSE\"\n}"
+        }
+      },
+      "id": "3b2d1e2f-1619-4a50-b8e5-0b5e09f53648",
+      "name": "Facebook Graph API",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "position": [
+        5568,
+        -496
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "cqOGeeKU0jq3Bm9E",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "channel",
+              "name": "channel",
+              "value": "={{ JSON.parse($json.content).channel }}",
+              "type": "string"
+            },
+            {
+              "id": "sessionId",
+              "name": "sessionId",
+              "value": "={{ JSON.parse($json.content).sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "requestId",
+              "name": "requestId",
+              "value": "={{ JSON.parse($json.content).requestId }}",
+              "type": "string"
+            },
+            {
+              "id": "userId",
+              "name": "userId",
+              "value": "={{ JSON.parse($json.content).userId }}",
+              "type": "string"
+            },
+            {
+              "id": "message",
+              "name": "message",
+              "value": "={{ JSON.parse($json.content).message }}",
+              "type": "string"
+            },
+            {
+              "id": "modelName",
+              "name": "modelName",
+              "value": "={{ JSON.parse($json.content).modelName ?? 'chatgpt' }}",
+              "type": "string"
+            },
+            {
+              "id": "replyMode",
+              "name": "replyMode",
+              "value": "={{ JSON.parse($json.content).replyMode ?? 'push' }}",
+              "type": "string"
+            },
+            {
+              "id": "callbackUrl",
+              "name": "callbackUrl",
+              "value": "={{ JSON.parse($json.content).callbackUrl ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "socketSessionId",
+              "name": "socketSessionId",
+              "value": "={{ JSON.parse($json.content).socketSessionId ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "metadata",
+              "name": "metadata",
+              "value": "={{ JSON.parse($json.content).metadata ?? {} }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ace31948-0930-4a34-9c01-17497aaf9a93",
+      "name": "Parse Queue Envelope",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        3952,
+        -992
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "requestId",
+              "name": "requestId",
+              "value": "={{ 'n8n-chat-' + Date.now() + '-' + Math.random().toString(36).slice(2) }}",
+              "type": "string"
+            },
+            {
+              "id": "channel",
+              "name": "channel",
+              "value": "n8n_chat",
+              "type": "string"
+            },
+            {
+              "id": "sessionId",
+              "name": "sessionId",
+              "value": "={{ $json.sessionId ?? ('n8n-chat-' + Date.now()) }}",
+              "type": "string"
+            },
+            {
+              "id": "userId",
+              "name": "userId",
+              "value": "={{ $json.sessionId ?? 'n8n-chat-user' }}",
+              "type": "string"
+            },
+            {
+              "id": "message",
+              "name": "message",
+              "value": "={{ $json.chatInput ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "modelName",
+              "name": "modelName",
+              "value": "chatgpt",
+              "type": "string"
+            },
+            {
+              "id": "replyMode",
+              "name": "replyMode",
+              "value": "n8n_response_node",
+              "type": "string"
+            },
+            {
+              "id": "callbackUrl",
+              "name": "callbackUrl",
+              "value": "={{ $json.body?.reply?.callbackUrl ?? 'http://webchat-gateway:8090/api/responses' }}",
+              "type": "string"
+            },
+            {
+              "id": "socketSessionId",
+              "name": "socketSessionId",
+              "value": "={{ $json.body?.reply?.socketSessionId ?? $json.body?.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "metadata",
+              "name": "metadata",
+              "value": "={{ {source:'n8n-chat-trigger', sessionId:$json.sessionId, raw:$json} }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a04e479e-1a09-4568-baf8-753f4b0148a0",
+      "name": "Normalize Internal Chat",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        2720,
+        -1040
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "channel",
+              "name": "channel",
+              "value": "telegram",
+              "type": "string"
+            },
+            {
+              "id": "sessionId",
+              "name": "sessionId",
+              "value": "={{ 'tg-' + $json.message.chat.id }}",
+              "type": "string"
+            },
+            {
+              "id": "requestId",
+              "name": "requestId",
+              "value": "={{ 'tg-' + ($json.message?.message_id ?? Date.now()) }}",
+              "type": "string"
+            },
+            {
+              "id": "userId",
+              "name": "userId",
+              "value": "={{ String($json.message.chat.id) }}",
+              "type": "string"
+            },
+            {
+              "id": "message",
+              "name": "message",
+              "value": "={{ $json.message?.text ?? $json.message?.caption ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "modelName",
+              "name": "modelName",
+              "value": "chatgpt",
+              "type": "string"
+            },
+            {
+              "id": "replyMode",
+              "name": "replyMode",
+              "value": "push",
+              "type": "string"
+            },
+            {
+              "id": "callbackUrl",
+              "name": "callbackUrl",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "socketSessionId",
+              "name": "socketSessionId",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "metadata",
+              "name": "metadata",
+              "value": "={{ {source:'telegram', messageId:$json.message?.message_id, username:$json.message?.from?.username} }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1d8d0742-dd05-493b-89dc-c9b55f15024e",
+      "name": "Normalize Telegram",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        2720,
+        -832
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "requestId",
+              "name": "requestId",
+              "value": "={{ $json.body?.entry?.[0]?.messaging?.[0]?.message?.mid ?? ('fb-' + Date.now() + '-' + Math.random().toString(36).slice(2)) }}",
+              "type": "string"
+            },
+            {
+              "id": "channel",
+              "name": "channel",
+              "value": "facebook",
+              "type": "string"
+            },
+            {
+              "id": "sessionId",
+              "name": "sessionId",
+              "value": "={{ 'fb-' + $json.body.entry[0].messaging[0].sender.id }}",
+              "type": "string"
+            },
+            {
+              "id": "userId",
+              "name": "userId",
+              "value": "={{ $json.body.entry[0].messaging[0].sender.id }}",
+              "type": "string"
+            },
+            {
+              "id": "message",
+              "name": "message",
+              "value": "={{ $json.body?.entry?.[0]?.messaging?.[0]?.message?.text ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "modelName",
+              "name": "modelName",
+              "value": "chatgpt",
+              "type": "string"
+            },
+            {
+              "id": "replyMode",
+              "name": "replyMode",
+              "value": "push",
+              "type": "string"
+            },
+            {
+              "id": "callbackUrl",
+              "name": "callbackUrl",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "socketSessionId",
+              "name": "socketSessionId",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "metadata",
+              "name": "metadata",
+              "value": "={{ {source:'facebook-messenger', pageId:$json.body?.entry?.[0]?.id, messageId:$json.body?.entry?.[0]?.messaging?.[0]?.message?.mid} }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "44b73830-7e04-47df-9a06-4eb2baf6e0f4",
+      "name": "Normalize Facebook",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        2720,
+        -464
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "requestId",
+              "name": "requestId",
+              "value": "={{ $json.entry?.[0]?.messaging?.[0]?.message?.mid ?? ('ig-' + Date.now() + '-' + Math.random().toString(36).slice(2)) }}",
+              "type": "string"
+            },
+            {
+              "id": "channel",
+              "name": "channel",
+              "value": "instagram",
+              "type": "string"
+            },
+            {
+              "id": "sessionId",
+              "name": "sessionId",
+              "value": "={{ 'ig-' + (($json.body?.entry?.[0]?.messaging?.[0]?.sender?.id) ?? 'unknown') }}",
+              "type": "string"
+            },
+            {
+              "id": "userId",
+              "name": "userId",
+              "value": "={{ $json.body?.entry?.[0]?.messaging?.[0]?.sender?.id ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "message",
+              "name": "message",
+              "value": "={{ $json.body?.entry?.[0]?.messaging?.[0]?.message?.text ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "modelName",
+              "name": "modelName",
+              "value": "chatgpt",
+              "type": "string"
+            },
+            {
+              "id": "replyMode",
+              "name": "replyMode",
+              "value": "push",
+              "type": "string"
+            },
+            {
+              "id": "callbackUrl",
+              "name": "callbackUrl",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "socketSessionId",
+              "name": "socketSessionId",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "metadata",
+              "name": "metadata",
+              "value": "={{ {source:'instagram', raw:$json} }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c0badae3-abb7-4ac4-8cf3-b2ebc1c1c5cb",
+      "name": "Normalize Instagram",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        2720,
+        -256
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "jsCode": "\nif ($input.first().json.query[\"hub.verify_token\"] === \"ZavarceCloud_2026\") {\n return [{ json: { challenge: $input.first().json.query[\"hub.challenge\"] } }];\n}\n"
+      },
+      "id": "4a450432-454e-473e-bd81-0f6ac58dd879",
+      "name": "Code in JavaScript1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        2960,
+        656
+      ],
+      "typeVersion": 2,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.challenge }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain"
+              }
+            ]
+          }
+        }
+      },
+      "id": "77377ebe-f1f7-4478-82e5-6cea2237623b",
+      "name": "Respond to Webhook1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        3152,
+        656
+      ],
+      "typeVersion": 1.5,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dfadb2cf-6637-4bcb-a80e-a59fd592afff",
+        "options": {}
+      },
+      "id": "8be6ce09-6741-42c8-a0a4-6a13a396bc9b",
+      "name": "Facebook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        2496,
+        -432
+      ],
+      "typeVersion": 2.1,
+      "webhookId": "581de06e-d79b-4955-beef-3c9022090ff9"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "8ddf2e2c-e855-4b8d-a99e-c7d200c6ec57",
+        "options": {}
+      },
+      "id": "5c078198-4ba4-4f0d-8be6-9345ef2eaaa6",
+      "name": "Webchat Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        2496,
+        -624
+      ],
+      "typeVersion": 2.1,
+      "webhookId": "331356fd-599e-4aaa-a821-371909fa001f"
+    },
+    {
+      "parameters": {
+        "content": "## Instagram Verify \n**SOLO PARA VERIFICAR EL WEBHOOK EN META** \n\nDebe ser una copia del trigger webhook que usamos en el flujo para recibir mensajes desde Meta pero con el metodo GET",
+        "height": 336,
+        "width": 672,
+        "color": 2
+      },
+      "id": "51e88ed6-29bb-460b-8a26-d3ae7d0153bf",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2704,
+        496
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "path": "16bb98f3-5b88-4c22-bafd-430ab87ada32",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "dce6bb62-a646-4e2f-a73d-1280f83a2121",
+      "name": "Instagram_Verify_API",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        2752,
+        656
+      ],
+      "typeVersion": 2.1,
+      "webhookId": "5667e0c0-9b95-429c-b7b2-5216e5703a4b",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "16bb98f3-5b88-4c22-bafd-430ab87ada32",
+        "options": {}
+      },
+      "id": "1953af6a-ee39-4382-a7d3-7b86b679dec4",
+      "name": "Instagram Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        2496,
+        -256
+      ],
+      "typeVersion": 2.1,
+      "webhookId": "99bdbd51-879e-4204-9d51-29d8e81c5c35"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "requestId",
+              "name": "requestId",
+              "value": "={{ $json.body.data.key.participant ?? $json.body.sender }}",
+              "type": "string"
+            },
+            {
+              "id": "channel",
+              "name": "channel",
+              "value": "whatsapp",
+              "type": "string"
+            },
+            {
+              "id": "sessionId",
+              "name": "sessionId",
+              "value": "=wa-{{$json.body.data.key.id}}",
+              "type": "string"
+            },
+            {
+              "id": "userId",
+              "name": "userId",
+              "value": "={{ $json.body.data.key.remoteJid }}",
+              "type": "string"
+            },
+            {
+              "id": "message",
+              "name": "message",
+              "value": "={{ $json.body.data.message.conversation ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "modelName",
+              "name": "modelName",
+              "value": "chatgpt",
+              "type": "string"
+            },
+            {
+              "id": "replyMode",
+              "name": "replyMode",
+              "value": "push",
+              "type": "string"
+            },
+            {
+              "id": "callbackUrl",
+              "name": "callbackUrl",
+              "value": "={{ $json.body.destination }}",
+              "type": "string"
+            },
+            {
+              "id": "socketSessionId",
+              "name": "socketSessionId",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "metadata",
+              "name": "metadata",
+              "value": "={{ JSON.stringify($json.body.data) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3a2c60fc-222b-462b-9bd7-6edab8e6dec3",
+      "name": "Normalize Whatsapp",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        2720,
+        -80
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "N8N Local RZavarce",
+        "remoteJid": "={{ $('Enrich Output').item.json.userId }}",
+        "messageText": "={{ $json.output }}",
+        "options_message": {}
+      },
+      "id": "bea2983d-d5b9-4440-94da-8d946a7c1bf2",
+      "name": "Enviar texto",
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "position": [
+        5568,
+        -304
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "evolutionApi": {
+          "id": "h6tSJBfygaZYXji2",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "modelName",
+              "name": "modelName",
+              "value": "gemini",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "815fbe25-9300-451f-ac9d-214423e01780",
+      "name": "Set LLM Model",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        2960,
+        -576
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "content": "## LLM Model Orchestrator\n\nFULL PRO:\n- Model routing por modelName y complexityScore\n- DeepSeek para simple\n- GPT/OpenAI para normal\n- Claude/Gemini para mayor precisión",
+        "height": 544,
+        "width": 672,
+        "color": 6
+      },
+      "id": "8d6bd2d3-c844-4c64-8827-5c1433bcb799",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3696,
+        -800
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Ominichannel Requester \n**Envia la respeusta en emisor segun el canal de entrada**\n\nFULL PRO añade trazas y métricas antes del routing.",
+        "height": 1088,
+        "width": 688,
+        "color": 4
+      },
+      "id": "a4131c0c-2522-4eea-a041-aaffacacc1be",
+      "name": "Sticky Note6",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        5184,
+        -1216
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "toonEnabled",
+              "name": "toonEnabled",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "toonSchema",
+              "name": "toonSchema",
+              "value": "product|faq|policy|document_section",
+              "type": "string"
+            },
+            {
+              "id": "toonChunkSize",
+              "name": "toonChunkSize",
+              "value": 450,
+              "type": "number"
+            },
+            {
+              "id": "toonChunkOverlap",
+              "name": "toonChunkOverlap",
+              "value": 40,
+              "type": "number"
+            },
+            {
+              "id": "ragOptimization",
+              "name": "ragOptimization",
+              "value": "TOON metadata + dynamic chunking + concise retrieval",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "22394331-d602-4d0a-b352-7400d4de6eb1",
+      "name": "NEW - TOON Ingestion Policy",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        4160,
+        -1760
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst item = $input.first().json;\nconst message = String(item.message || '').trim();\nconst lower = message.toLowerCase();\nconst hints = { intent: 'general', category: '', needsRag: true, topK: 4 };\nconst categories = ['monitor','ssd','disco','ram','memoria','teclado','mouse','raton','gpu','tarjeta','cpu','procesador','laptop','portatil','fuente','case','gabinete'];\nfor (const c of categories) {\n  if (lower.includes(c)) { hints.category = c; hints.intent = 'product_lookup'; break; }\n}\nif (/(precio|cuesta|valor|stock|disponible|cantidad|código|codigo)/i.test(message)) hints.intent = 'inventory_query';\nconst queryOptimized = message\n  .replace(/\\b(hola|buenas|por favor|please|gracias)\\b/gi, '')\n  .replace(/\\s+/g, ' ')\n  .trim();\nreturn [{ json: { ...item, queryOriginal: message, queryOptimized: queryOptimized || message, retrievalHints: hints, trace: { queryOptimizedAt: new Date().toISOString(), hints } } }];\n"
+      },
+      "id": "130389b0-1a31-46a5-a55b-40961b39d98f",
+      "name": "NEW - Query Optimizer TOON",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        4192,
+        -992
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(({ json }) => {\n  const msg = String(json.message || '').toLowerCase();\n\n  let complexityScore = 2;\n  let routingReason = 'forced_chatgpt_default';\n\n  // Clasificación de complejidad, pero SIN cambiar el modelo\n  if (\n    msg.length < 80 &&\n    !/(compar|recomienda|alternativa|explica|compatib|rendimiento|gaming)/.test(msg)\n  ) {\n    complexityScore = 1;\n    routingReason = 'simple_query_forced_to_chatgpt';\n  }\n\n  if (/(precio|stock|disponible|codigo|código|cantidad|cuesta|valor)/.test(msg)) {\n    complexityScore = 2;\n    routingReason = 'inventory_query_forced_to_chatgpt';\n  }\n\n  if (/(compar|recomienda|mejor|compatib|rendimiento|gaming|alternativa)/.test(msg)) {\n    complexityScore = 4;\n    routingReason = 'complex_query_forced_to_chatgpt';\n  }\n\n  if (/(informe|analiza|estrategia|arquitectura|diagnostica)/.test(msg)) {\n    complexityScore = 5;\n    routingReason = 'advanced_query_forced_to_chatgpt';\n  }\n\n  return {\n    json: {\n      ...json,\n\n      // IMPORTANTE: forzamos siempre ChatGPT\n      modelName: 'chatgpt',\n\n      // Guardamos el modelo original por trazabilidad\n      requestedModelName: json.modelName || null,\n\n      complexityScore,\n      routingReason,\n\n      trace: {\n        ...(typeof json.trace === 'object' ? json.trace : {}),\n        modelRouter: {\n          forcedModel: 'chatgpt',\n          previousModel: json.modelName || null,\n          complexityScore,\n          routingReason,\n          routedAt: new Date().toISOString()\n        }\n      }\n    }\n  };\n});"
+      },
+      "id": "b057b12d-df4a-45fd-85ce-4eebd57b7b6c",
+      "name": "NEW - Complexity Model Router",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        3152,
+        -576
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "\nreturn $input.all().map(({json}) => {\n  const now = new Date().toISOString();\n  const trace = {\n    ...(typeof json.trace === 'object' ? json.trace : {}),\n    completedAt: now,\n    channel: json.channel,\n    requestId: json.requestId,\n    responseChars: String(json.output || '').length,\n    optimization: 'TOON + dynamic chunking + topK4 + concise context'\n  };\n  return { json: { ...json, trace } };\n});\n"
+      },
+      "id": "608c0942-e231-44bb-80b1-ae86bf0a9455",
+      "name": "NEW - Metrics Trace",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        4944,
+        -992
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "content": "## TOON / Weaviate Schema recomendado\n\nCollection: Documents\nVectorizer: none\nProps:\n- type: text\n- title/name: text\n- content: text\n- summary: text\n- category: text\n- price: number\n- stock: int\n- code: text\n- source: text\n- timestamp: date\n\nBúsqueda recomendada:\n- topK=4\n- filtros por category/type cuando existan\n- contenido compacto estilo TOON",
+        "height": 464,
+        "width": 520,
+        "color": 3
+      },
+      "id": "b1bac55c-5c6f-4beb-8312-ba0596a1326b",
+      "name": "NEW - Sticky TOON Schema",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        5200,
+        -2192
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## FULL PRO Observability\n\nTrazas mínimas:\n- queryOriginal\n- queryOptimized\n- retrievalHints\n- modelName / complexityScore\n- responseChars\n- latency/cost si el proveedor lo expone\n\nSiguiente paso: persistir NEW - Metrics Trace en Postgres/Elastic/Prometheus.",
+        "height": 300,
+        "width": 420,
+        "color": 7
+      },
+      "id": "5333d9b7-6365-49da-b9c3-5ff55d11417d",
+      "name": "NEW - Sticky Observability",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        4720,
+        -368
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "numberInputs": 4,
+        "rules": {
+          "rule": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "operator": {
+                      "name": "filter.operator.equals",
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $('Parse Queue Envelope').item.json.modelName }}",
+                    "rightValue": "gemini",
+                    "id": "b455766a-22d8-4397-9add-747870aaa695"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "modelIndex": 2,
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "operator": {
+                      "name": "filter.operator.equals",
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $('Parse Queue Envelope').item.json.modelName }}",
+                    "rightValue": "chatgpt",
+                    "id": "c50dd362-97c1-4778-bd5f-23b4fdf9fc04"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "modelIndex": 3,
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "operator": {
+                      "name": "filter.operator.equals",
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $('Parse Queue Envelope').item.json.modelName }}",
+                    "rightValue": "claude",
+                    "id": "d396a839-f502-442c-9ce3-1b08fcae26d9"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "modelIndex": 4,
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Parse Queue Envelope').item.json.modelName }}",
+                    "rightValue": "deepseek",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "90effdb3-0796-4280-a3d2-74cf95c7dfe4"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        }
+      },
+      "id": "dc5352e9-7214-491a-9f42-cd6593af89f1",
+      "name": "Model Orchestrator1",
+      "type": "@n8n/n8n-nodes-langchain.modelSelector",
+      "position": [
+        4016,
+        -672
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "sendTo": "roger.zavarce@businessinsights.es",
+        "subject": "New RAG Executed in n8n  Workflow",
+        "message": "<!DOCTYPE html>\n<html>\n<head>\n    <style>\n        .email-container {\n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n            line-height: 1.6;\n            color: #333333;\n            max-width: 600px;\n            margin: 0 auto;\n            border: 1px solid #e0e0e0;\n            border-radius: 8px;\n            overflow: hidden;\n        }\n        .header {\n            background-color: #ff6d5a;\n            color: #ffffff;\n            padding: 20px;\n            text-align: center;\n        }\n        .content {\n            padding: 30px;\n            background-color: #ffffff;\n        }\n        .footer {\n            background-color: #f4f7f9;\n            padding: 15px;\n            text-align: center;\n            font-size: 12px;\n            color: #777777;\n        }\n        .status-badge {\n            display: inline-block;\n            background-color: #2ecc71;\n            color: white;\n            padding: 4px 12px;\n            border-radius: 20px;\n            font-size: 14px;\n            font-weight: bold;\n        }\n        ul {\n            list-style: none;\n            padding: 0;\n        }\n        li {\n            margin-bottom: 10px;\n            padding-left: 20px;\n            position: relative;\n        }\n        li:before {\n            content: \"•\";\n            color: #ff6d5a;\n            font-weight: bold;\n            position: absolute;\n            left: 0;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"email-container\">\n        <div class=\"header\">\n            <h1 style=\"margin:0; font-size: 20px;\">Notificación de Automatización</h1>\n        </div>\n        <div class=\"content\">\n            <p>Hola,</p>\n            <p>Se ha completado con éxito una nueva ejecución del proceso <strong>RAG (Retrieval-Augmented Generation)</strong> en tu flujo de n8n.</p>\n            \n            <div style=\"margin: 20px 0; border-left: 4px solid #ff6d5a; padding-left: 15px;\">\n                <ul>\n                    <li><strong> Proyecto:</strong> Soporte ZavarceCloud</li>\n                    <li><strong> Estado:</strong> <span class=\"status-badge\">COMPLETADO</span></li>\n                    <li><strong> Origen:</strong> Document Loader / Vector Store</li>\n                    <li><strong> Acción:</strong> Respuesta generada dinámicamente</li>\n                </ul>\n            </div>\n\n            <p>Los logs detallados y los pasos intermedios de la IA están disponibles para su revisión inmediata en el panel de control de n8n.</p>\n            \n            <p style=\"margin-top: 30px;\">Saludos,<br>\n            <strong>Sistema de Inteligencia Artificial</strong><br>\n            ZavarceCloud Automation</p>\n        </div>\n        <div class=\"footer\">\n            Este es un mensaje automático generado por n8n. Por favor, no respondas a este correo.\n        </div>\n    </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        4976,
+        -1760
+      ],
+      "id": "16544980-7ced-4f58-b862-fbfaabb46b0c",
+      "name": "Send a message1",
+      "webhookId": "246ce484-bf77-40bf-9f1d-be187fe9d33a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "dWnJSv8kjoMCwXrD",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "3f7e2e80-fd52-4b5d-9f6f-f07043b5f3ad",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "a23141ab-fb57-42ba-ba1b-b4e07497c7a9",
+      "name": "Whatsapp Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        2496,
+        -80
+      ],
+      "typeVersion": 2.1,
+      "webhookId": "19569915-6e5e-47b3-979c-97c8ecdaae55"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "requestId",
+              "name": "requestId",
+              "value": "={{ $json.body?.requestId ?? ('req-' + Date.now() + '-' + Math.random().toString(36).slice(2)) }}",
+              "type": "string"
+            },
+            {
+              "id": "channel",
+              "name": "channel",
+              "value": "webhook",
+              "type": "string"
+            },
+            {
+              "id": "sourceChannel",
+              "name": "sourceChannel",
+              "value": "={{ $json.body?.channel ?? 'webchat' }}",
+              "type": "string"
+            },
+            {
+              "id": "sessionId",
+              "name": "sessionId",
+              "value": "={{ $json.body?.sessionId ?? ('webchat-' + Date.now()) }}",
+              "type": "string"
+            },
+            {
+              "id": "userId",
+              "name": "userId",
+              "value": "={{ $json.body?.userId ?? $json.body?.sessionId ?? ('webchat-user-' + Date.now()) }}",
+              "type": "string"
+            },
+            {
+              "id": "message",
+              "name": "message",
+              "value": "={{ $json.body?.message ?? $json.body?.chatInput ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "modelName",
+              "name": "modelName",
+              "value": "chatgpt",
+              "type": "string"
+            },
+            {
+              "id": "requestedModelName",
+              "name": "requestedModelName",
+              "value": "={{ $json.body?.modelName ?? 'chatgpt' }}",
+              "type": "string"
+            },
+            {
+              "id": "replyMode",
+              "name": "replyMode",
+              "value": "={{ $json.body?.reply?.mode ?? 'websocket' }}",
+              "type": "string"
+            },
+            {
+              "id": "callbackUrl",
+              "name": "callbackUrl",
+              "value": "={{ $json.body?.reply?.callbackUrl ?? 'http://webchat-gateway:8090/api/responses' }}",
+              "type": "string"
+            },
+            {
+              "id": "socketSessionId",
+              "name": "socketSessionId",
+              "value": "={{ $json.body?.reply?.socketSessionId ?? $json.body?.sessionId ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "metadata",
+              "name": "metadata",
+              "value": "={{ JSON.stringify({ source: 'webchat-gateway', normalizedChannel: 'webhook', originalChannel: $json.body?.channel ?? 'webchat', transport: $json.body?.metadata?.transport ?? 'websocket', createdAt: $json.body?.metadata?.createdAt ?? new Date().toISOString(), originalMetadata: $json.body?.metadata ?? {}, reply: $json.body?.reply ?? {}, webhookUrl: $json.webhookUrl ?? '', executionMode: $json.executionMode ?? '' }) }}",
+              "type": "string"
+            },
+            {
+              "id": "trace",
+              "name": "trace",
+              "value": "={{ { normalizeWebhookAt: new Date().toISOString(), forcedModelName: 'chatgpt', requestedModelName: $json.body?.modelName ?? 'chatgpt', sourceChannel: $json.body?.channel ?? 'webchat' } }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "89e12096-78c4-4c33-b2a3-8f92aca55e0b",
+      "name": "Normalize Webhook1",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        2720,
+        -624
+      ],
+      "typeVersion": 3.4
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Weaviate Vector Store1",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Store Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini (retrieval)": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Weaviate Vector Store2",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download File From Google Drive": {
+      "main": [
+        [
+          {
+            "node": "NEW - TOON Ingestion Policy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NEW - TOON Ingestion Policy": {
+      "main": [
+        [
+          {
+            "node": "Weaviate Vector Store1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model (retrieval)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Vector Store Tool",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Weaviate Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weaviate Vector Store2": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Vector Store Tool",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Normalize Internal Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalize Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrich Output": {
+      "main": [
+        [
+          {
+            "node": "NEW - Metrics Trace",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NEW - Metrics Trace": {
+      "main": [
+        [
+          {
+            "node": "Route Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Response": {
+      "main": [
+        [
+          {
+            "node": "Chat",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Telegram Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Facebook Graph API",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar texto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Model Orchestrator1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Model Orchestrator1",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Model Orchestrator1",
+            "type": "ai_languageModel",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Model Orchestrator1",
+            "type": "ai_languageModel",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Enrich Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weaviate Vector Store1": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Folder ID": {
+      "main": [
+        [
+          {
+            "node": "Download File From Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Google Folder ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download File From Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RabbitMQ Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Queue Envelope",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook_Verify_API": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Queue Envelope": {
+      "main": [
+        [
+          {
+            "node": "NEW - Query Optimizer TOON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NEW - Query Optimizer TOON": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Internal Chat": {
+      "main": [
+        [
+          {
+            "node": "Set LLM Model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Telegram": {
+      "main": [
+        [
+          {
+            "node": "Set LLM Model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Facebook": {
+      "main": [
+        [
+          {
+            "node": "Set LLM Model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Instagram": {
+      "main": [
+        [
+          {
+            "node": "Set LLM Model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalize Facebook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webchat Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalize Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram_Verify_API": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalize Instagram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Whatsapp": {
+      "main": [
+        [
+          {
+            "node": "Set LLM Model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set LLM Model": {
+      "main": [
+        [
+          {
+            "node": "NEW - Complexity Model Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NEW - Complexity Model Router": {
+      "main": [
+        [
+          {
+            "node": "RabbitMQ1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Model Orchestrator1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Whatsapp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalize Whatsapp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Set LLM Model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "00bfbdb4-a67c-4963-944e-4a7c899ade12",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d48bc5d30259673d0598e792b17754f2c3bb98053eb6f3f670a2df08dfa34847"
+  },
+  "id": "DEJSEPJWJX4rJzyB",
+  "tags": []
+}

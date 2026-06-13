@@ -12,3 +12,4 @@ volumes/
 .venv
 ragas_runner/.venv/
 ragas_runner/logs/
+evolution-api/

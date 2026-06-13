@@ -356,7 +356,9 @@ services:
 
   evolution:
     <<: *common
-    image: ${EVOLUTION_IMAGE}
+    build:
+      context: ./evolution-api
+      dockerfile: Dockerfile
     container_name: ai_evolution
     profiles: [dev, prod]
     ports:

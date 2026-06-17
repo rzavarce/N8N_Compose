@@ -149,13 +149,16 @@ services:
       - "traefik.http.services.minio.loadbalancer.server.port=9001"
 
   weaviate:
-    <<: [*common, *backend, *proxy]
+    <<: *common
     image: ${WEAVIATE_IMAGE}
     container_name: ai_vector_db
     profiles: [dev, prod]
     ports:
       - "${WEAVIATE_PORT}:8080"
       - "${WEAVIATE_GRPC_PORT}:50051"
+    networks:
+      - backend_network
+      - proxy_network
     environment:
       RAFT_BOOTSTRAP_EXPECT: ${WEAVIATE_RAFT_BOOTSTRAP_EXPECT}
       CLUSTER_HOSTNAME: ${WEAVIATE_CLUSTER_HOSTNAME}

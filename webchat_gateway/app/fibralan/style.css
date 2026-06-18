@@ -335,4 +335,7 @@ h1, h2, h3, h4, .btn {
     .nav-links li { width: 100%; padding: 15px 0; }
     .hero-buttons { display: flex; flex-direction: column; gap: 15px; }
     .btn-secondary { margin-left: 0; }
+    .pulse-banner { padding: 30px 0; }
+    .pulse-banner h2 { font-size: 1.6rem; margin-bottom: 15px; }
+    .pulse-banner p { font-size: 1rem; }
 }

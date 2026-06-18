@@ -53,6 +53,13 @@ http:
         certresolver: myresolver
       service: rabbitui-svc
 
+    fibralan:
+      rule: "Host(`fibralansecurity.com`) || Host(`www.fibralansecurity.com`)"
+      entrypoints: [websecure]
+      tls:
+        certresolver: myresolver
+      service: webchat-svc
+
     weaviate:
       rule: "Host(`vector.flowsdone.com`)"
       entrypoints: [websecure]

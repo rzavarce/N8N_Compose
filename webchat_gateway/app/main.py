@@ -410,8 +410,16 @@ async def health() -> Dict:
 
 
 @app.get("/")
-async def index() -> FileResponse:
+async def index(request: Request) -> FileResponse:
+    host = request.headers.get("host", "")
+    if "fibralansecurity.com" in host:
+        return FileResponse("app/fibralan/index.html")
     return FileResponse("app/static/index.html")
+
+
+@app.get("/fibralan")
+async def fibralan() -> FileResponse:
+    return FileResponse("app/fibralan/index.html")
 
 
 # ─────────────────────────────────────────────
@@ -711,4 +719,5 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str) -> None:
         await manager.disconnect(session_id, websocket)
 
 
+app.mount("/fibralan", StaticFiles(directory="app/fibralan"), name="fibralan")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")

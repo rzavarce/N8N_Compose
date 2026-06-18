@@ -285,14 +285,22 @@
       }
 
       if (data.type === 'chat.response') {
-        const bubble = this.pendingBubbles.get(data.requestId);
+        let bubble = this.pendingBubbles.get(data.requestId);
+        let bubbleKey = data.requestId;
+
+        if (!bubble || !bubble.isConnected) {
+          const firstEntry = this.pendingBubbles.entries().next().value;
+          if (firstEntry) {
+            [bubbleKey, bubble] = firstEntry;
+          }
+        }
 
         this.replaceWaitingMessage(
           bubble,
           data.response || data.output || data.message || ''
         );
 
-        this.pendingBubbles.delete(data.requestId);
+        this.pendingBubbles.delete(bubbleKey);
         this.setLoading(false);
 
         return;

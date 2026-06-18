@@ -607,6 +607,7 @@ services:
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
       - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
       - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.myresolver.acme.preferredchain=ISRG Root X1"
       - "--accesslog=true"
       - "--log.level=${TRAEFIK_LOG_LEVEL}"
     ports:
